@@ -7,8 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_cupertino_date_picker/flutter_cupertino_date_picker.dart';
 import 'package:intl/intl.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'image_choice.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -26,20 +26,38 @@ class _HomePageState extends State<HomePage> {
       color: Color(0xfff7f7f7),
   );
 
+  getValues() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    setState(() {
+      if (prefs.containsKey("dateDay"))
+        selectedDate = DateTime.parse(prefs.getString("dateDay"));
+    });
+  }
+
   Future<Null> _selectDate(BuildContext context) async {
-    final DateTime picked = await showDatePicker(
+    final DateTime picked_date = await showDatePicker(
         context: context,
         initialDate: selectedDate.add(Duration(minutes: 5)),
         firstDate: _now,
         lastDate: DateTime(_now.year + 100));
-    if (picked != null && picked != selectedDate)
-      setState(() async {
+
+    final TimeOfDay picked_time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(hour: selectedDate.hour, minute: selectedDate.minute),
+    );
+
+    final DateTime picked = picked_date.add(Duration(hours: picked_time.hour, minutes: picked_time.minute));
+
+    if (picked != null && picked != selectedDate) {
+      setState(() {
         selectedDate = picked;
         secondsLeft = selectedDate.difference(_now).inMinutes;
-
-        final prefs = await SharedPreferences.getInstance();
-        prefs.setString("dateDay", selectedDate.toString());
       });
+
+      final prefs = await SharedPreferences.getInstance();
+      prefs.setString("dateDay", selectedDate.toString());
+    }
   }
 
   // Tick the clock
@@ -58,14 +76,10 @@ class _HomePageState extends State<HomePage> {
     super.initState();
   }
 
-  getValues() async {
-    final prefs = await SharedPreferences.getInstance();
-    galleryFile = File(prefs.getString("photoPath"));
-    selectedDate = DateTime.parse(prefs.getString("dateDay"));
-  }
-
   @override
   Widget build(BuildContext context) {
+    getValues();
+
     return Scaffold(
       body: Container(
         height: MediaQuery.of(context).size.height,
@@ -95,7 +109,7 @@ class _HomePageState extends State<HomePage> {
                             Row(
                               children: <Widget>[
                                 Text(
-                                  "Date day:",
+                                  "Date: ",
                                   style: mainText,
                                 ),
                                 FlatButton(
@@ -103,7 +117,7 @@ class _HomePageState extends State<HomePage> {
                                   padding: EdgeInsets.all(3.0),
                                   color: Color(0x7fa2a2a2),
                                   child: Text(
-                                    new DateFormat.yMd().format(selectedDate),
+                                    "${new DateFormat.yMd().format(selectedDate)} ${new DateFormat.Hm().format(selectedDate)}",
                                     style: mainText,
                                   ),
                                 ),
@@ -116,62 +130,8 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
               ),
-              Expanded(
-                child: GestureDetector(
-                  onLongPress: () {
-                    showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return SimpleDialog(
-                              title: Text("Camera/Gallery"),
-                              children: <Widget>[
-                                SimpleDialogOption(
-                                  onPressed: () async {
-                                    log("Flag1");
-                                    final File file = await ImagePicker.pickImage(
-                                      source: ImageSource.gallery,
-                                    );
-                                    final prefs = await SharedPreferences.getInstance();
-                                    prefs.setString("photoPath", file.path);
-                                    setState(() {
-                                      log(galleryFile.path);
-                                      galleryFile = file;
-                                    });
-                                  },
-                                  child: const Text('Pick From Gallery'),
-                                ),
-                                SimpleDialogOption(
-                                  onPressed: () async {
-                                    final File file = await ImagePicker.pickImage(
-                                      source: ImageSource.camera,
-                                    );
-                                    final prefs = await SharedPreferences.getInstance();
-                                    prefs.setString("photoPath", file.path);
-                                    setState(() {
-                                      galleryFile = file;
-                                    });
-                                  },
-                                  child: const Text('Take A New Picture'),
-                                ),
-                              ]);
-                        });
-                  },
-                  child: Container(
-                    color: Colors.black26,
-                    child: Row(
-                      children: <Widget>[
-                        if(galleryFile != null)
-                          Expanded(
-                            child:
-                              Image.file(
-                              galleryFile,
-                              fit: BoxFit.cover,
-                              ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
+              ImageChoice(
+                prefName: "photoPath",
               ),
               Padding(
                 padding: EdgeInsets.fromLTRB(5, 5, 0, 50),
