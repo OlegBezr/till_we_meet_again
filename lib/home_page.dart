@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_cupertino_date_picker/flutter_cupertino_date_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import 'image_choice.dart';
 
 class HomePage extends StatefulWidget {
@@ -16,47 +17,47 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  DateTime _now = DateTime.now();
-  DateTime selectedDate = DateTime.now();
-  int secondsLeft = 0;
-  File galleryFile;
-
-  TextStyle mainText = TextStyle(
-      fontSize: 26.0,
-      color: Color(0xfff7f7f7),
+  final TextStyle mainText = TextStyle(
+    fontSize: 26.0,
+    color: Color(0xfff7f7f7),
   );
+
+  DateTime _now = DateTime.now();
+  DateTime _selectedDate = DateTime.now();
+  int _secondsLeft = 0;
+  File _galleryFile;
 
   getValues() async {
     final prefs = await SharedPreferences.getInstance();
 
     setState(() {
       if (prefs.containsKey("dateDay"))
-        selectedDate = DateTime.parse(prefs.getString("dateDay"));
+        _selectedDate = DateTime.parse(prefs.getString("dateDay"));
     });
   }
 
   Future<Null> _selectDate(BuildContext context) async {
-    final DateTime picked_date = await showDatePicker(
+    final DateTime pickedDate = await showDatePicker(
         context: context,
-        initialDate: selectedDate.add(Duration(minutes: 5)),
+        initialDate: _selectedDate.add(Duration(minutes: 5)),
         firstDate: _now,
         lastDate: DateTime(_now.year + 100));
 
-    final TimeOfDay picked_time = await showTimePicker(
+    final TimeOfDay pickedTime = await showTimePicker(
       context: context,
-      initialTime: TimeOfDay(hour: selectedDate.hour, minute: selectedDate.minute),
+      initialTime: TimeOfDay(hour: _selectedDate.hour, minute: _selectedDate.minute),
     );
 
-    final DateTime picked = picked_date.add(Duration(hours: picked_time.hour, minutes: picked_time.minute));
+    final DateTime picked = pickedDate.add(Duration(hours: pickedTime.hour, minutes: pickedTime.minute));
 
-    if (picked != null && picked != selectedDate) {
+    if (picked != null && picked != _selectedDate) {
       setState(() {
-        selectedDate = picked;
-        secondsLeft = selectedDate.difference(_now).inMinutes;
+        _selectedDate = picked;
+        _secondsLeft = _selectedDate.difference(_now).inMinutes;
       });
 
       final prefs = await SharedPreferences.getInstance();
-      prefs.setString("dateDay", selectedDate.toString());
+      prefs.setString("dateDay", _selectedDate.toString());
     }
   }
 
@@ -69,7 +70,7 @@ class _HomePageState extends State<HomePage> {
       if (this.mounted) {
         setState(() {
           _now = DateTime.now();
-          secondsLeft = selectedDate.difference(_now).inSeconds;
+          _secondsLeft = _selectedDate.difference(_now).inSeconds;
         });
       }
     });
@@ -117,7 +118,7 @@ class _HomePageState extends State<HomePage> {
                                   padding: EdgeInsets.all(3.0),
                                   color: Color(0x7fa2a2a2),
                                   child: Text(
-                                    "${new DateFormat.yMd().format(selectedDate)} ${new DateFormat.Hm().format(selectedDate)}",
+                                    "${new DateFormat.yMd().format(_selectedDate)} ${new DateFormat.Hm().format(_selectedDate)}",
                                     style: mainText,
                                   ),
                                 ),
@@ -138,7 +139,7 @@ class _HomePageState extends State<HomePage> {
                 child: Row(
                   children: <Widget>[
                     Text(
-                      "Time left: ${secondsLeft ~/ (24 * 60 * 60)} days ${(secondsLeft ~/ 3600) % 24}h ${(secondsLeft ~/ 60) % 60}m",
+                      "Time left: ${_secondsLeft ~/ (24 * 60 * 60)} days ${(_secondsLeft ~/ 3600) % 24}h ${(_secondsLeft ~/ 60) % 60}m",
                       style: mainText,
                     ),
                   ],

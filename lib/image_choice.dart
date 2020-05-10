@@ -20,14 +20,14 @@ class _ImageChoiceState extends State<ImageChoice> {
   _ImageChoiceState({this.prefName});
 
   String prefName;
-  File galleryFile;
+  File _galleryFile;
 
   getValues() async {
     final prefs = await SharedPreferences.getInstance();
 
     setState(() {
       if (prefs.containsKey(prefName))
-        galleryFile = File(prefs.getString(prefName));
+        _galleryFile = File(prefs.getString(prefName));
     });
   }
 
@@ -53,7 +53,7 @@ class _ImageChoiceState extends State<ImageChoice> {
                           prefs.setString(prefName, file.path);
 
                           setState(() {
-                            galleryFile = file;
+                            _galleryFile = file;
                           });
 
                           Navigator.pop(context);
@@ -70,7 +70,7 @@ class _ImageChoiceState extends State<ImageChoice> {
                           prefs.setString(prefName, file.path);
 
                           setState(() {
-                            galleryFile = file;
+                            _galleryFile = file;
                           });
 
                           Navigator.pop(context);
@@ -84,15 +84,15 @@ class _ImageChoiceState extends State<ImageChoice> {
           color: Colors.black26,
           child: Row(
             children: <Widget>[
-              if(galleryFile != null)
+              if(_galleryFile != null)
                 Expanded(
                   child:
                   Image.file(
-                    galleryFile,
+                    _galleryFile,
                     fit: BoxFit.cover,
                   ),
                 ),
-              if(galleryFile == null)
+              if(_galleryFile == null)
                 Expanded(
                   child: Icon(
                     Icons.camera_alt,
