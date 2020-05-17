@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:developer';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:multiple_image_picker/multiple_image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ImageChoice extends StatefulWidget {
