@@ -1,11 +1,7 @@
 import 'dart:async';
-import 'dart:io';
-import 'dart:developer';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_cupertino_date_picker/flutter_cupertino_date_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -25,23 +21,25 @@ class _HomePageState extends State<HomePage> {
   DateTime _now = DateTime.now();
   DateTime _selectedDate = DateTime.now();
   int _secondsLeft = 0;
-  File _galleryFile;
+  String _datePref = "dateDay";
+  String _photoPref = "photo";
 
   getValues() async {
     final prefs = await SharedPreferences.getInstance();
 
     setState(() {
-      if (prefs.containsKey("dateDay"))
-        _selectedDate = DateTime.parse(prefs.getString("dateDay"));
+      if (prefs.containsKey(_datePref))
+        _selectedDate = DateTime.parse(prefs.getString(_datePref));
     });
   }
 
   Future<Null> _selectDate(BuildContext context) async {
     final DateTime pickedDate = await showDatePicker(
-        context: context,
-        initialDate: _selectedDate.add(Duration(minutes: 5)),
-        firstDate: _now,
-        lastDate: DateTime(_now.year + 100));
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: _now.subtract(Duration(hours: 12)),
+      lastDate: DateTime(_now.year + 100)
+    );
 
     final TimeOfDay pickedTime = await showTimePicker(
       context: context,
@@ -49,7 +47,6 @@ class _HomePageState extends State<HomePage> {
     );
 
     final DateTime picked = pickedDate.add(Duration(hours: pickedTime.hour, minutes: pickedTime.minute));
-
     if (picked != null && picked != _selectedDate) {
       setState(() {
         _selectedDate = picked;
@@ -57,7 +54,7 @@ class _HomePageState extends State<HomePage> {
       });
 
       final prefs = await SharedPreferences.getInstance();
-      prefs.setString("dateDay", _selectedDate.toString());
+      prefs.setString(_datePref, _selectedDate.toString());
     }
   }
 
@@ -132,7 +129,7 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               ImageChoice(
-                prefName: "photoPath",
+                photoPref: _photoPref,
               ),
               Padding(
                 padding: EdgeInsets.fromLTRB(5, 5, 0, 50),

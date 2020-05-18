@@ -1,100 +1,125 @@
 import 'dart:async';
-import 'dart:io';
-import 'dart:developer';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:multiple_image_picker/multiple_image_picker.dart';
+
+import 'package:multi_image_picker/multi_image_picker.dart';
+import 'package:carousel_pro/carousel_pro.dart';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ImageChoice extends StatefulWidget {
-  ImageChoice({this.prefName});
+  ImageChoice({this.photoPref});
 
-  final String prefName;
+  final String photoPref;
 
   @override
-  _ImageChoiceState createState() => _ImageChoiceState(prefName: prefName,);
+  _ImageChoiceState createState() => _ImageChoiceState(photoPref: photoPref,);
 }
 
 class _ImageChoiceState extends State<ImageChoice> {
-  _ImageChoiceState({this.prefName});
+  _ImageChoiceState({this.photoPref});
 
-  String prefName;
-  File _galleryFile;
+  String photoPref;
+  List<Asset> images = List<Asset>();
+  int _maxImages = 5;
 
   getValues() async {
     final prefs = await SharedPreferences.getInstance();
 
     setState(() {
-      if (prefs.containsKey(prefName))
-        _galleryFile = File(prefs.getString(prefName));
+      for (int i = 0; i < _maxImages; i++) {
+        if (prefs.containsKey(photoPref + "Name" + i.toString())) {
+          String id = prefs.getString(photoPref + "Id" + i.toString());
+          String name = prefs.getString(photoPref + "Name" + i.toString());
+          int width = prefs.getInt(photoPref + "Width" + i.toString());
+          int height = prefs.getInt(photoPref + "Height" + i.toString());
+
+          images.add(
+            Asset(id, name, width, height)
+          );
+        }
+      }
     });
   }
 
-  @override Widget build(BuildContext context) {
-    getValues();
+  saveValues() async {
+    final prefs = await SharedPreferences.getInstance();
 
+    setState(() {
+      for (int i = 0; i < images.length; i++) {
+        prefs.setString(photoPref + "Id" + i.toString(), images[i].identifier);
+        prefs.setString(photoPref + "Name" + i.toString(), images[i].name);
+        prefs.setInt(photoPref + "Width" + i.toString(), images[i].originalWidth);
+        prefs.setInt(photoPref + "Height" + i.toString(), images[i].originalHeight);
+      }
+
+      for (int i = images.length; i < _maxImages; i++) {
+        prefs.remove(photoPref + "Id" + i.toString());
+        prefs.remove(photoPref + "Name" + i.toString());
+        prefs.remove(photoPref + "Width" + i.toString());
+        prefs.remove(photoPref + "Height" + i.toString());
+      }
+    });
+  }
+
+  Future<void> pickImages() async {
+    List<Asset> result = images;
+
+    try {
+      result = await MultiImagePicker.pickImages(
+        maxImages: _maxImages,
+        enableCamera: true,
+        selectedAssets: images,
+        cupertinoOptions: CupertinoOptions(
+          takePhotoIcon: "chat"
+        ),
+        materialOptions: MaterialOptions(
+          actionBarColor: "#abcdef",
+          actionBarTitle: "Choose photos",
+          allViewTitle: "All Photos",
+          useDetailsView: false,
+          selectCircleStrokeColor: "#000000",
+        ),
+      );
+    }
+    catch (error) {
+      result = images;
+    }
+
+    saveValues();
+
+    setState(() {
+      images = result;
+    });
+  }
+
+  @override
+  void initState() {
+    getValues();
+    super.initState();
+  }
+
+  @override Widget build(BuildContext context) {
     return Expanded(
       child: GestureDetector(
-        onLongPress: () {
-          showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return SimpleDialog(
-                    title: Text("Camera/Gallery"),
-                    children: <Widget>[
-                      SimpleDialogOption(
-                        onPressed: () async {
-                          final File file = await ImagePicker.pickImage(
-                            source: ImageSource.gallery,
-                          );
-
-                          final prefs = await SharedPreferences.getInstance();
-                          prefs.setString(prefName, file.path);
-
-                          setState(() {
-                            _galleryFile = file;
-                          });
-
-                          Navigator.pop(context);
-                        },
-                        child: const Text('Pick From Gallery'),
-                      ),
-                      SimpleDialogOption(
-                        onPressed: () async {
-                          final File file = await ImagePicker.pickImage(
-                            source: ImageSource.camera,
-                          );
-
-                          final prefs = await SharedPreferences.getInstance();
-                          prefs.setString(prefName, file.path);
-
-                          setState(() {
-                            _galleryFile = file;
-                          });
-
-                          Navigator.pop(context);
-                        },
-                        child: const Text('Take A New Picture'),
-                      ),
-                    ]);
-              });
-        },
+        onLongPress: pickImages,
         child: Container(
           color: Colors.black26,
           child: Row(
             children: <Widget>[
-              if(_galleryFile != null)
+              if(images.length != 0)
                 Expanded(
                   child:
-                  Image.file(
-                    _galleryFile,
-                    fit: BoxFit.cover,
-                  ),
+                    GestureDetector(
+                      onLongPress: pickImages,
+                      child: Carousel(
+                        autoplay: false,
+                        images: images.map((item) => AssetThumbImageProvider(item, width: item.originalWidth, height: item.originalHeight)).toList(),
+                      ),
+                    ),
                 ),
-              if(_galleryFile == null)
+              if(images.length == 0)
                 Expanded(
                   child: Icon(
                     Icons.camera_alt,
