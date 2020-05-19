@@ -30,6 +30,7 @@ class _MyAppState extends State<MyApp> {
         primarySwatch: Colors.pink,
       ),
       home: FutureBuilder(
+        future: Hive.openBox('profiles'),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.done) {
             if (snapshot.hasError)
@@ -40,7 +41,7 @@ class _MyAppState extends State<MyApp> {
           // we still need to return something before the Future completes.
           else
             return Scaffold(
-              backgroundColor: Colors.red,
+              backgroundColor: Colors.white,
             );
         },
       ),
