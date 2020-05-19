@@ -29,6 +29,13 @@ class Profile extends HiveObject {
     }).toList();
   }
 
+  DateTime get dateGet {
+    if (date == null)
+      return DateTime.now();
+    else
+      return date;
+  }
+
   List<Asset> getAssets() {
     return images.map((item) { 
       return Asset(item.identifier, item.name, item.originalWidth, item.originalHeight);

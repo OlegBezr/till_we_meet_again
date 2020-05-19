@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -27,7 +28,7 @@ class _HomePageState extends State<HomePage> {
   Future<Null> _selectDate(BuildContext context) async {
     final DateTime pickedDate = await showDatePicker(
       context: context,
-      initialDate: mainProfile.date,
+      initialDate: mainProfile.dateGet,
       firstDate: _now.subtract(
         Duration(
           hours: 23, 
@@ -40,13 +41,34 @@ class _HomePageState extends State<HomePage> {
     final TimeOfDay pickedTime = await showTimePicker(
       context: context,
       initialTime: TimeOfDay(
-        hour: mainProfile.date.hour, 
-        minute: mainProfile.date.minute,
+        hour: mainProfile.dateGet.hour, 
+        minute: mainProfile.dateGet.minute,
       ),
     );
 
     final DateTime picked = pickedDate.add(Duration(hours: pickedTime.hour, minutes: pickedTime.minute));
-    if (picked != null && picked != mainProfile.date) {
+    if (picked.isBefore(_now)) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text("Date error", style: mainText),
+            content: Text("You can't choose meeting time before rn", style: TextStyle(color: Colors.white70),),
+            actions: [
+              FlatButton(
+                child: Text(
+                  "Ok", 
+                  style: mainText,
+                ),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
+            backgroundColor: Color(0xfffc69a1),
+          );
+        }
+      );
+    }
+    else if (picked != null && picked != mainProfile.date) {
       setState(() {
         mainProfile.date = picked;
         _secondsLeft = mainProfile.date.difference(_now).inMinutes;
@@ -63,7 +85,7 @@ class _HomePageState extends State<HomePage> {
       if (this.mounted) {
         setState(() {
           _now = DateTime.now();
-          _secondsLeft = mainProfile.date.difference(_now).inSeconds;
+          _secondsLeft = mainProfile.dateGet.difference(_now).inSeconds;
         });
       }
     });
@@ -76,7 +98,6 @@ class _HomePageState extends State<HomePage> {
 
     if (profilesBox.length == 0) {
       mainProfile = new Profile(
-        date: DateTime.now(),
         images: new List<CustomAsset>(),
       );
       profilesBox.add(mainProfile);
@@ -122,7 +143,7 @@ class _HomePageState extends State<HomePage> {
                                   padding: EdgeInsets.all(3.0),
                                   color: Color(0x7fa2a2a2),
                                   child: Text(
-                                    "${new DateFormat.yMd().format(mainProfile.date)} ${new DateFormat.Hm().format(mainProfile.date)}",
+                                    "${new DateFormat.yMd().format(mainProfile.dateGet)} ${new DateFormat.Hm().format(mainProfile.dateGet)}",
                                     style: mainText,
                                   ),
                                 ),
