@@ -6,71 +6,33 @@ import 'package:flutter/material.dart';
 import 'package:multi_image_picker/multi_image_picker.dart';
 import 'package:carousel_pro/carousel_pro.dart';
 
-import 'package:shared_preferences/shared_preferences.dart';
+import 'models/profile.dart';
 
 class ImageChoice extends StatefulWidget {
-  ImageChoice({this.photoPref});
+  ImageChoice({this.mainProfile});
 
-  final String photoPref;
+  final Profile mainProfile;
 
   @override
-  _ImageChoiceState createState() => _ImageChoiceState(photoPref: photoPref,);
+  _ImageChoiceState createState() {
+    return _ImageChoiceState(mainProfile: mainProfile,);
+  }
 }
 
 class _ImageChoiceState extends State<ImageChoice> {
-  _ImageChoiceState({this.photoPref});
+  _ImageChoiceState({this.mainProfile});
 
-  String photoPref;
-  List<Asset> images = List<Asset>();
+  Profile mainProfile;
   int _maxImages = 5;
 
-  getValues() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    setState(() {
-      for (int i = 0; i < _maxImages; i++) {
-        if (prefs.containsKey(photoPref + "Name" + i.toString())) {
-          String id = prefs.getString(photoPref + "Id" + i.toString());
-          String name = prefs.getString(photoPref + "Name" + i.toString());
-          int width = prefs.getInt(photoPref + "Width" + i.toString());
-          int height = prefs.getInt(photoPref + "Height" + i.toString());
-
-          images.add(
-            Asset(id, name, width, height)
-          );
-        }
-      }
-    });
-  }
-
-  saveValues() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    setState(() {
-      for (int i = 0; i < images.length; i++) {
-        prefs.setString(photoPref + "Id" + i.toString(), images[i].identifier);
-        prefs.setString(photoPref + "Name" + i.toString(), images[i].name);
-        prefs.setInt(photoPref + "Width" + i.toString(), images[i].originalWidth);
-        prefs.setInt(photoPref + "Height" + i.toString(), images[i].originalHeight);
-      }
-
-      for (int i = images.length; i < _maxImages; i++) {
-        prefs.remove(photoPref + "Id" + i.toString());
-        prefs.remove(photoPref + "Name" + i.toString());
-        prefs.remove(photoPref + "Width" + i.toString());
-        prefs.remove(photoPref + "Height" + i.toString());
-      }
-    });
-  }
-
   Future<void> pickImages() async {
-    List<Asset> result = images;
+    List<Asset> result = mainProfile.getAssets();
 
     try {
       result = await MultiImagePicker.pickImages(
         maxImages: _maxImages,
         enableCamera: true,
-        selectedAssets: images,
+        selectedAssets: mainProfile.getAssets(),
         cupertinoOptions: CupertinoOptions(
           takePhotoIcon: "chat"
         ),
@@ -84,20 +46,12 @@ class _ImageChoiceState extends State<ImageChoice> {
       );
     }
     catch (error) {
-      result = images;
+      result = mainProfile.getAssets();
     }
 
-    saveValues();
-
     setState(() {
-      images = result;
+      mainProfile.imagesSet = result;
     });
-  }
-
-  @override
-  void initState() {
-    getValues();
-    super.initState();
   }
 
   @override Widget build(BuildContext context) {
@@ -108,18 +62,18 @@ class _ImageChoiceState extends State<ImageChoice> {
           color: Colors.black26,
           child: Row(
             children: <Widget>[
-              if(images.length != 0)
+              if(mainProfile.images.length != 0)
                 Expanded(
                   child:
                     GestureDetector(
                       onLongPress: pickImages,
                       child: Carousel(
                         autoplay: false,
-                        images: images.map((item) => AssetThumbImageProvider(item, width: item.originalWidth, height: item.originalHeight)).toList(),
+                        images: mainProfile.getRenderImages(),
                       ),
                     ),
                 ),
-              if(images.length == 0)
+              if(mainProfile.images.length == 0)
                 Expanded(
                   child: Icon(
                     Icons.camera_alt,

@@ -3,9 +3,11 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hive/hive.dart';
 
 import 'image_choice.dart';
+import 'models/custom_asset.dart';
+import 'models/profile.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -18,56 +20,50 @@ class _HomePageState extends State<HomePage> {
     color: Color(0xfff7f7f7),
   );
 
+  Profile mainProfile;
   DateTime _now = DateTime.now();
-  DateTime _selectedDate = DateTime.now();
   int _secondsLeft = 0;
-  String _datePref = "dateDay";
-  String _photoPref = "photo";
-
-  getValues() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    setState(() {
-      if (prefs.containsKey(_datePref))
-        _selectedDate = DateTime.parse(prefs.getString(_datePref));
-    });
-  }
 
   Future<Null> _selectDate(BuildContext context) async {
     final DateTime pickedDate = await showDatePicker(
       context: context,
-      initialDate: _selectedDate,
-      firstDate: _now.subtract(Duration(hours: 12)),
-      lastDate: DateTime(_now.year + 100)
+      initialDate: mainProfile.date,
+      firstDate: _now.subtract(
+        Duration(
+          hours: 23, 
+          minutes: 59,
+        )
+      ),
+      lastDate: DateTime(_now.year + 100),
     );
 
     final TimeOfDay pickedTime = await showTimePicker(
       context: context,
-      initialTime: TimeOfDay(hour: _selectedDate.hour, minute: _selectedDate.minute),
+      initialTime: TimeOfDay(
+        hour: mainProfile.date.hour, 
+        minute: mainProfile.date.minute,
+      ),
     );
 
     final DateTime picked = pickedDate.add(Duration(hours: pickedTime.hour, minutes: pickedTime.minute));
-    if (picked != null && picked != _selectedDate) {
+    if (picked != null && picked != mainProfile.date) {
       setState(() {
-        _selectedDate = picked;
-        _secondsLeft = _selectedDate.difference(_now).inMinutes;
+        mainProfile.date = picked;
+        _secondsLeft = mainProfile.date.difference(_now).inMinutes;
       });
 
-      final prefs = await SharedPreferences.getInstance();
-      prefs.setString(_datePref, _selectedDate.toString());
+      mainProfile.save();
     }
   }
 
   // Tick the clock
   @override
   void initState() {
-    getValues();
-
     Timer.periodic(Duration(milliseconds: 500), (v) {
       if (this.mounted) {
         setState(() {
           _now = DateTime.now();
-          _secondsLeft = _selectedDate.difference(_now).inSeconds;
+          _secondsLeft = mainProfile.date.difference(_now).inSeconds;
         });
       }
     });
@@ -76,7 +72,18 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    getValues();
+    final profilesBox = Hive.box('profiles');
+
+    if (profilesBox.length == 0) {
+      mainProfile = new Profile(
+        date: DateTime.now(),
+        images: new List<CustomAsset>(),
+      );
+      profilesBox.add(mainProfile);
+    }
+    else {
+      mainProfile = profilesBox.getAt(0);
+    }
 
     return Scaffold(
       body: Container(
@@ -115,7 +122,7 @@ class _HomePageState extends State<HomePage> {
                                   padding: EdgeInsets.all(3.0),
                                   color: Color(0x7fa2a2a2),
                                   child: Text(
-                                    "${new DateFormat.yMd().format(_selectedDate)} ${new DateFormat.Hm().format(_selectedDate)}",
+                                    "${new DateFormat.yMd().format(mainProfile.date)} ${new DateFormat.Hm().format(mainProfile.date)}",
                                     style: mainText,
                                   ),
                                 ),
@@ -129,7 +136,7 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               ImageChoice(
-                photoPref: _photoPref,
+                mainProfile: mainProfile,
               ),
               Padding(
                 padding: EdgeInsets.fromLTRB(5, 5, 0, 50),
