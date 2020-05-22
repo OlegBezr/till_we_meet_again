@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:developer';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -23,7 +22,6 @@ class _HomePageState extends State<HomePage> {
 
   Profile mainProfile;
   DateTime _now = DateTime.now();
-  int _secondsLeft = 0;
 
   Future<Null> _selectDate(BuildContext context) async {
     final DateTime pickedDate = await showDatePicker(
@@ -71,7 +69,6 @@ class _HomePageState extends State<HomePage> {
     else if (picked != null && picked != mainProfile.date) {
       setState(() {
         mainProfile.date = picked;
-        _secondsLeft = mainProfile.date.difference(_now).inMinutes;
       });
 
       mainProfile.save();
@@ -85,7 +82,6 @@ class _HomePageState extends State<HomePage> {
       if (this.mounted) {
         setState(() {
           _now = DateTime.now();
-          _secondsLeft = mainProfile.dateGet.difference(_now).inSeconds;
         });
       }
     });
@@ -112,68 +108,90 @@ class _HomePageState extends State<HomePage> {
         width: MediaQuery.of(context).size.width,
         color: Colors.black26,
         child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            datePicker(),
+            ImageChoice(
+              mainProfile: mainProfile,
+            ),
+            timeLeft(),
+          ],
+        ),
+      ),
+      backgroundColor: Color(0xfffc69a1),
+    );
+  }
+
+  Widget datePicker() {
+    String _today = DateFormat.yMd().format(_now);
+    String _meetDate = new DateFormat.yMd().format(mainProfile.dateGet);
+    String _meetTime = new DateFormat.Hm().format(mainProfile.dateGet);
+
+    return Container(
+      width: MediaQuery.of(context).size.width,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(5, 25, 0, 0),
+        child: Container(
+          child: Row(
             children: <Widget>[
-              Container(
-                width: MediaQuery.of(context).size.width,
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(5, 25, 0, 0),
-                  child: Container(
-                    child: Row(
-                      children: <Widget>[
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Row(
-                              children: <Widget>[
-                                Text(
-                                  "Today: ${new DateFormat.yMd().format(_now)}",
-                                  style: mainText,
-                                ),
-                              ],
-                            ),
-                            Row(
-                              children: <Widget>[
-                                Text(
-                                  "Date: ",
-                                  style: mainText,
-                                ),
-                                FlatButton(
-                                  onPressed: () => _selectDate(context),
-                                  padding: EdgeInsets.all(3.0),
-                                  color: Color(0x7fa2a2a2),
-                                  child: Text(
-                                    "${new DateFormat.yMd().format(mainProfile.dateGet)} ${new DateFormat.Hm().format(mainProfile.dateGet)}",
-                                    style: mainText,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Row(
+                    children: <Widget>[
+                      Text(
+                        "Today: $_today",
+                        style: mainText,
+                      ),
+                    ],
                   ),
-                ),
-              ),
-              ImageChoice(
-                mainProfile: mainProfile,
-              ),
-              Padding(
-                padding: EdgeInsets.fromLTRB(5, 5, 0, 50),
-                child: Row(
-                  children: <Widget>[
-                    Text(
-                      "Time left: ${_secondsLeft ~/ (24 * 60 * 60)} days ${(_secondsLeft ~/ 3600) % 24}h ${(_secondsLeft ~/ 60) % 60}m",
-                      style: mainText,
-                    ),
-                  ],
-                ),
+                  Row(
+                    children: <Widget>[
+                      Text(
+                        "Date: ",
+                        style: mainText,
+                      ),
+                      FlatButton(
+                        onPressed: () => _selectDate(context),
+                        padding: EdgeInsets.all(3.0),
+                        color: Color(0x7fa2a2a2),
+                        child: Text(
+                          "$_meetDate $_meetTime",
+                          style: mainText,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ],
           ),
+        ),
       ),
-      backgroundColor: Color(0xfffc69a1),
+    );
+  }
+
+  Widget timeLeft() {
+    int _seconds = mainProfile.dateGet.difference(_now).inSeconds;
+
+    if (mainProfile.dateGet.isBefore(_now)) {
+      _seconds = 0;
+    }
+
+    int _days = _seconds ~/ (24 * 60 * 60);
+    int _hours = (_seconds ~/ 3600) % 24;
+    int _minutes= (_seconds ~/ 60) % 60;
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(5, 5, 0, 50),
+      child: Row(
+        children: <Widget>[
+          Text(
+            "Time left: $_days days ${_hours}h ${_minutes}m",
+            style: mainText,
+          ),
+        ],
+      ),
     );
   }
 }
