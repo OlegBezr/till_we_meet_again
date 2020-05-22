@@ -23,58 +23,6 @@ class _HomePageState extends State<HomePage> {
   Profile mainProfile;
   DateTime _now = DateTime.now();
 
-  Future<Null> _selectDate(BuildContext context) async {
-    final DateTime pickedDate = await showDatePicker(
-      context: context,
-      initialDate: mainProfile.dateGet,
-      firstDate: _now.subtract(
-        Duration(
-          hours: 23, 
-          minutes: 59,
-        )
-      ),
-      lastDate: DateTime(_now.year + 100),
-    );
-
-    final TimeOfDay pickedTime = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay(
-        hour: mainProfile.dateGet.hour, 
-        minute: mainProfile.dateGet.minute,
-      ),
-    );
-
-    final DateTime picked = pickedDate.add(Duration(hours: pickedTime.hour, minutes: pickedTime.minute));
-    if (picked.isBefore(_now)) {
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text("Date error", style: mainText),
-            content: Text("You can't choose meeting time before rn", style: TextStyle(color: Colors.white70),),
-            actions: [
-              FlatButton(
-                child: Text(
-                  "Ok", 
-                  style: mainText,
-                ),
-                onPressed: () => Navigator.pop(context),
-              ),
-            ],
-            backgroundColor: Color(0xfffc69a1),
-          );
-        }
-      );
-    }
-    else if (picked != null && picked != mainProfile.date) {
-      setState(() {
-        mainProfile.date = picked;
-      });
-
-      mainProfile.save();
-    }
-  }
-
   // Tick the clock
   @override
   void initState() {
@@ -127,6 +75,67 @@ class _HomePageState extends State<HomePage> {
     String _meetDate = new DateFormat.yMd().format(mainProfile.dateGet);
     String _meetTime = new DateFormat.Hm().format(mainProfile.dateGet);
 
+    Future<Null> _selectDate(BuildContext context) async {
+      final DateTime pickedDate = await showDatePicker(
+        context: context,
+        initialDate: mainProfile.dateGet,
+        firstDate: _now.subtract(
+          Duration(
+            hours: 23, 
+            minutes: 59,
+          )
+        ),
+        lastDate: DateTime(_now.year + 100),
+      );
+
+      final TimeOfDay pickedTime = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay(
+          hour: mainProfile.dateGet.hour, 
+          minute: mainProfile.dateGet.minute,
+        ),
+      );
+
+      final DateTime picked = pickedDate.add(Duration(hours: pickedTime.hour, minutes: pickedTime.minute));
+      if (picked.isBefore(_now)) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text("Date error", style: mainText),
+              content: Text(
+                "You can't choose meeting time before rn", 
+                style: TextStyle(
+                  color: Color(0xfff7f7f7),
+                ),
+              ),
+              actions: [
+                FlatButton(
+                  padding: EdgeInsets.all(3.0),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(8))),
+                  color: Color(0x7fa2a2a2),
+                  splashColor: Color(0x7f898989),
+                  child: Text(
+                    "OK", 
+                    style: mainText,
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+              backgroundColor: Color.alphaBlend(Colors.black26, Color(0xfffc7aab)),
+            );
+          }
+        );
+      }
+      else if (picked != null && picked != mainProfile.date) {
+        setState(() {
+          mainProfile.date = picked;
+        });
+
+        mainProfile.save();
+      }
+    }
+
     return Container(
       width: MediaQuery.of(context).size.width,
       child: Padding(
@@ -152,9 +161,11 @@ class _HomePageState extends State<HomePage> {
                         style: mainText,
                       ),
                       FlatButton(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(8))),
                         onPressed: () => _selectDate(context),
                         padding: EdgeInsets.all(3.0),
                         color: Color(0x7fa2a2a2),
+                        splashColor: Color(0x7f898989),
                         child: Text(
                           "$_meetDate $_meetTime",
                           style: mainText,
