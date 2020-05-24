@@ -1,12 +1,13 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import 'package:multi_image_picker/multi_image_picker.dart';
-import 'package:carousel_pro/carousel_pro.dart';
+import 'package:image_picker/image_picker.dart';
 
 import 'models/profile.dart';
+import 'image.dart';
 
 class ImageChoice extends StatefulWidget {
   ImageChoice({this.mainProfile});
@@ -21,68 +22,129 @@ class ImageChoice extends StatefulWidget {
 
 class _ImageChoiceState extends State<ImageChoice> {
   _ImageChoiceState({this.mainProfile});
-
+  
   Profile mainProfile;
-  int _maxImages = 5;
 
-  Future<void> pickImages() async {
-    List<Asset> result = mainProfile.getAssets();
+  final int _maxImages = 5;
 
-    try {
-      result = await MultiImagePicker.pickImages(
-        maxImages: _maxImages,
-        enableCamera: true,
-        selectedAssets: mainProfile.getAssets(),
-        cupertinoOptions: CupertinoOptions(
-          takePhotoIcon: "chat"
-        ),
-        materialOptions: MaterialOptions(
-          actionBarColor: "#abcdef",
-          actionBarTitle: "Choose photos",
-          allViewTitle: "All Photos",
-          useDetailsView: false,
-          selectCircleStrokeColor: "#000000",
-        ),
-      );
-    }
-    catch (error) {
-      result = mainProfile.getAssets();
-    }
+  final TextStyle mainText = TextStyle(
+    fontSize: 26.0,
+    color: Color(0xfff7f7f7),
+  );
 
-    setState(() {
-      mainProfile.imagesSet = result;
-    });
+  @override
+  void initState() {
+    super.initState();
   }
 
   @override Widget build(BuildContext context) {
     return Expanded(
-      child: GestureDetector(
-        onLongPress: pickImages,
-        child: Container(
-          color: Colors.black26,
-          child: Row(
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        physics: PageScrollPhysics(),
+        children: <Widget>[] + 
+          imageWidgets() +
+          <Widget>[
+            addImageWidget(),
+          ],
+      ),
+    );
+  }
+
+  List<Widget> imageWidgets() {
+    List<Widget> renderedImages = List<Widget>();
+
+    for (int i = 0; i < mainProfile.images.length; i++) {
+      print("Render $i");
+
+      renderedImages.add(
+        ImageWidget(
+          image: File(mainProfile.images[i]),
+          index: i,
+          mainProfile: mainProfile,
+        )
+      );
+    }
+
+    return renderedImages;
+  }
+
+  Widget addImageWidget() {
+    Future<void> addImage() async {
+      void closeWindow(File file) async {
+        if (file != null) {
+          setState(() {
+            mainProfile.images.add(file.path);
+            mainProfile.save();
+          });
+        }
+      }
+      
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return SimpleDialog(
+            title: Text("Add Image"),
             children: <Widget>[
-              if(mainProfile.images.length != 0)
-                Expanded(
-                  child:
-                    GestureDetector(
-                      onLongPress: pickImages,
-                      child: Carousel(
-                        autoplay: false,
-                        images: mainProfile.getRenderImages(),
-                      ),
-                    ),
-                ),
-              if(mainProfile.images.length == 0)
-                Expanded(
-                  child: Icon(
-                    Icons.camera_alt,
-                    size: 100,
-                    color: Colors.black54,
-                  ),
-                ),
-            ],
-          ),
+              SimpleDialogOption(
+                onPressed: () async {
+                  final File file = await ImagePicker.pickImage(
+                    source: ImageSource.gallery,
+                  );
+                  closeWindow(file);
+                  Navigator.pop(context);
+                },
+                child: const Text('Choose From Gallery'),
+              ),
+              SimpleDialogOption(
+                onPressed: () async {
+                  final File file = await ImagePicker.pickImage(
+                    source: ImageSource.camera,
+                  );
+                  closeWindow(file);
+                  Navigator.pop(context);
+                },
+                child: const Text('Take A New Picture'),
+              ),
+            ]
+          );
+        }
+      );
+    }
+
+    return Container(
+      height: 100,
+      width: MediaQuery.of(context).size.width,
+      color: Colors.black26,
+      child: GestureDetector(
+        onLongPress: () => addImage(),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            if (mainProfile.images.length < _maxImages)
+              Icon(
+                Icons.add_a_photo,
+                size: 100,
+                color: Color(0xfff7f7f7),
+              ),
+            if (mainProfile.images.length < _maxImages)
+              Text(
+                "Hold to add\nan image", 
+                textAlign: TextAlign.center,
+                style: mainText,
+              ),
+            if (mainProfile.images.length >= _maxImages)
+              Icon(
+                Icons.block,
+                size: 100,
+                color: Color(0xfff7f7f7),
+              ),
+            if (mainProfile.images.length >= _maxImages)
+              Text(
+                "Images limit reached", 
+                style: mainText,
+              ),
+          ]
         ),
       ),
     );

@@ -1,4 +1,3 @@
-import 'package:TillWeMeetAgain/models/custom_asset.dart';
 import 'package:TillWeMeetAgain/models/profile.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
@@ -12,7 +11,6 @@ void main() async {
     await path_provider.getApplicationDocumentsDirectory();
   Hive.init(appDocumentsDirectory.path);
   Hive.registerAdapter(ProfileAdapter(), 0);
-  Hive.registerAdapter(CustomAssetAdapter(), 1);
   runApp(MyApp());
 } 
 

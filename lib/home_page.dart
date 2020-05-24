@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 import 'package:hive/hive.dart';
 
 import 'image_choice.dart';
-import 'models/custom_asset.dart';
 import 'models/profile.dart';
 
 class HomePage extends StatefulWidget {
@@ -42,7 +41,7 @@ class _HomePageState extends State<HomePage> {
 
     if (profilesBox.length == 0) {
       mainProfile = new Profile(
-        images: new List<CustomAsset>(),
+        images: new List<String>(),
       );
       profilesBox.add(mainProfile);
     }
@@ -198,7 +197,7 @@ class _HomePageState extends State<HomePage> {
       child: Row(
         children: <Widget>[
           Text(
-            "Time left: $_days days ${_hours}h ${_minutes}m",
+            "Time left: ${_days}d ${_hours}h ${_minutes}m",
             style: mainText,
           ),
         ],

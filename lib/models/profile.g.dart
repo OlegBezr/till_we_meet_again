@@ -15,7 +15,7 @@ class ProfileAdapter extends TypeAdapter<Profile> {
     };
     return Profile(
       date: fields[0] as DateTime,
-      images: (fields[1] as List)?.cast<CustomAsset>(),
+      images: (fields[1] as List)?.cast<String>(),
     );
   }
 
