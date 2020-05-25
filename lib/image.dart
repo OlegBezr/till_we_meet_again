@@ -94,7 +94,7 @@ class _ImageWidgetState extends State<ImageWidget> {
         width: MediaQuery.of(context).size.width,
         child: Image.file(
           image,
-          key: UniqueKey(),
+          key: new UniqueKey(),
           fit: BoxFit.cover,
         ),
       ),
