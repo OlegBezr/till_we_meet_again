@@ -58,8 +58,10 @@ class _HomePageState extends State<HomePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             datePicker(),
-            ImageChoice(
-              mainProfile: mainProfile,
+            Expanded(
+              child: ImageChoice(
+                mainProfile: mainProfile,
+              ),
             ),
             timeLeft(),
           ],
@@ -101,27 +103,15 @@ class _HomePageState extends State<HomePage> {
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              title: Text("Date error", style: mainText),
-              content: Text(
-                "You can't choose meeting time before rn", 
-                style: TextStyle(
-                  color: Color(0xfff7f7f7),
-                ),
-              ),
+              title: Text("Date error"),
+              content: Text("You can't choose meeting time before rn"),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(10))),
               actions: [
                 FlatButton(
-                  padding: EdgeInsets.all(3.0),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(8))),
-                  color: Color(0x7fa2a2a2),
-                  splashColor: Color(0x7f898989),
-                  child: Text(
-                    "OK", 
-                    style: mainText,
-                  ),
+                  child: Text("OK"),
                   onPressed: () => Navigator.pop(context),
                 ),
               ],
-              backgroundColor: Color.alphaBlend(Colors.black26, Color(0xfffc7aab)),
             );
           }
         );

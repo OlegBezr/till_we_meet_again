@@ -38,16 +38,24 @@ class _ImageChoiceState extends State<ImageChoice> {
   }
 
   @override Widget build(BuildContext context) {
-    return Expanded(
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        physics: PageScrollPhysics(),
-        children: <Widget>[] + 
-          imageWidgets() +
-          <Widget>[
-            addImageWidget(),
-          ],
-      ),
+    return Stack(
+      children: <Widget>[
+        Container(
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            physics: PageScrollPhysics(),
+            children: <Widget>[] + 
+              imageWidgets() +
+              <Widget>[
+                addImageWidget(),
+              ],
+          ),
+        ),
+        Align(
+          alignment: Alignment.bottomCenter,
+          child: Container(height: 50, width: 50, color: Colors.green,),
+        )
+      ],
     );
   }
 
@@ -62,6 +70,7 @@ class _ImageChoiceState extends State<ImageChoice> {
           image: File(mainProfile.images[i]),
           index: i,
           mainProfile: mainProfile,
+          key: Key(mainProfile.images[i]),
         )
       );
     }
@@ -85,6 +94,7 @@ class _ImageChoiceState extends State<ImageChoice> {
         builder: (BuildContext context) {
           return SimpleDialog(
             title: Text("Add Image"),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(10))),
             children: <Widget>[
               SimpleDialogOption(
                 onPressed: () async {
@@ -148,5 +158,56 @@ class _ImageChoiceState extends State<ImageChoice> {
         ),
       ),
     );
+  }
+
+  Widget _inactivePhoto() {
+    return new Container(
+      child: new Padding(
+        padding: const EdgeInsets.only(left: 3.0, right: 3.0),
+        child: Container(
+          height: 8.0,
+          width: 8.0,
+          decoration: BoxDecoration(
+            color: Colors.grey,
+            borderRadius: BorderRadius.circular(4.0)
+          ),
+        ),
+      )
+    );
+  }
+
+  Widget _activePhoto() {
+    return Container(
+      child: Padding(
+        padding: EdgeInsets.only(left: 3.0, right: 3.0),
+        child: Container(
+          height: 10.0,
+          width: 10.0,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(5.0),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey,
+                spreadRadius: 0.0,
+                blurRadius: 2.0
+              )
+            ]
+          ),
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildDots(int index) {
+    List<Widget> dots = [];
+
+    for(int i = 0; i< mainProfile.images.length + 1; ++i) {
+      dots.add(
+        i == index ? _activePhoto(): _inactivePhoto()
+      );
+    }
+
+    return dots;
   }
 }

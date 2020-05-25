@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -9,7 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'models/profile.dart';
 
 class ImageWidget extends StatefulWidget {
-    ImageWidget({this.image, this.index, this.mainProfile}) {
+    ImageWidget({this.image, this.index, this.mainProfile, Key key}) : super(key: key) {
       if (image == null) {
         mainProfile.images.removeAt(index);
         mainProfile.save();
@@ -36,6 +35,9 @@ class _ImageWidgetState extends State<ImageWidget> {
   Future<void> pickImage() async {
     void closeWindow(File file) async {
       if (file != null) {
+        mainProfile.images[index] = file.path;
+        mainProfile.save();
+
         setState(() {
           image = file;
         });
@@ -49,6 +51,7 @@ class _ImageWidgetState extends State<ImageWidget> {
       builder: (BuildContext context) {
         return SimpleDialog(
           title: Text("Modify picture"),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(10))),
           children: <Widget>[
             SimpleDialogOption(
               onPressed: () async {
@@ -94,7 +97,6 @@ class _ImageWidgetState extends State<ImageWidget> {
         width: MediaQuery.of(context).size.width,
         child: Image.file(
           image,
-          key: new UniqueKey(),
           fit: BoxFit.cover,
         ),
       ),
