@@ -1,136 +1,220 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import 'package:multi_image_picker/multi_image_picker.dart';
-import 'package:carousel_pro/carousel_pro.dart';
+import 'package:image_picker/image_picker.dart';
 
-import 'package:shared_preferences/shared_preferences.dart';
+import 'models/profile.dart';
+import 'image.dart';
 
 class ImageChoice extends StatefulWidget {
-  ImageChoice({this.photoPref});
+  ImageChoice({this.mainProfile});
 
-  final String photoPref;
+  final Profile mainProfile;
 
   @override
-  _ImageChoiceState createState() => _ImageChoiceState(photoPref: photoPref,);
+  _ImageChoiceState createState() {
+    return _ImageChoiceState(mainProfile: mainProfile,);
+  }
 }
 
 class _ImageChoiceState extends State<ImageChoice> {
-  _ImageChoiceState({this.photoPref});
+  _ImageChoiceState({this.mainProfile});
+  
+  Profile mainProfile;
 
-  String photoPref;
-  List<Asset> images = List<Asset>();
-  int _maxImages = 5;
+  final int _maxImages = 5;
+  int _activeImageIndex = 0;
 
-  getValues() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    setState(() {
-      for (int i = 0; i < _maxImages; i++) {
-        if (prefs.containsKey(photoPref + "Name" + i.toString())) {
-          String id = prefs.getString(photoPref + "Id" + i.toString());
-          String name = prefs.getString(photoPref + "Name" + i.toString());
-          int width = prefs.getInt(photoPref + "Width" + i.toString());
-          int height = prefs.getInt(photoPref + "Height" + i.toString());
-
-          images.add(
-            Asset(id, name, width, height)
-          );
-        }
-      }
-    });
-  }
-
-  saveValues() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    setState(() {
-      for (int i = 0; i < images.length; i++) {
-        prefs.setString(photoPref + "Id" + i.toString(), images[i].identifier);
-        prefs.setString(photoPref + "Name" + i.toString(), images[i].name);
-        prefs.setInt(photoPref + "Width" + i.toString(), images[i].originalWidth);
-        prefs.setInt(photoPref + "Height" + i.toString(), images[i].originalHeight);
-      }
-
-      for (int i = images.length; i < _maxImages; i++) {
-        prefs.remove(photoPref + "Id" + i.toString());
-        prefs.remove(photoPref + "Name" + i.toString());
-        prefs.remove(photoPref + "Width" + i.toString());
-        prefs.remove(photoPref + "Height" + i.toString());
-      }
-    });
-  }
-
-  Future<void> pickImages() async {
-    List<Asset> result = images;
-
-    try {
-      result = await MultiImagePicker.pickImages(
-        maxImages: _maxImages,
-        enableCamera: true,
-        selectedAssets: images,
-        cupertinoOptions: CupertinoOptions(
-          takePhotoIcon: "chat"
-        ),
-        materialOptions: MaterialOptions(
-          actionBarColor: "#abcdef",
-          actionBarTitle: "Choose photos",
-          allViewTitle: "All Photos",
-          useDetailsView: false,
-          selectCircleStrokeColor: "#000000",
-        ),
-      );
-    }
-    catch (error) {
-      result = images;
-    }
-
-    saveValues();
-
-    setState(() {
-      images = result;
-    });
-  }
+  final TextStyle mainText = TextStyle(
+    fontSize: 26.0,
+    color: Color(0xfff7f7f7),
+  );
 
   @override
   void initState() {
-    getValues();
     super.initState();
   }
 
   @override Widget build(BuildContext context) {
-    return Expanded(
-      child: GestureDetector(
-        onLongPress: pickImages,
-        child: Container(
-          color: Colors.black26,
-          child: Row(
+    return Stack(
+      children: <Widget>[
+        Container(
+          child: PageView.builder(
+            onPageChanged: _setActiveImage,
+            itemCount: mainProfile.images.length + 1,
+            itemBuilder: _getImageWidget,
+          ),
+        ),
+        Align(
+          alignment: Alignment.bottomCenter,
+          child: Padding(
+            padding: const EdgeInsets.all(15),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: _buildDots(_activeImageIndex)
+            ),
+          ),
+        )
+      ],
+    );
+  }
+
+  void _setActiveImage(int index) {
+    setState(() {
+      _activeImageIndex = index;
+    });
+  }
+
+  Widget _getImageWidget(BuildContext context, int index) {
+    if (index < mainProfile.images.length)
+      return ImageWidget(
+        image: File(mainProfile.images[index]),
+        index: index,
+        mainProfile: mainProfile,
+        key: Key(mainProfile.images[index]),
+      );
+    else
+      return _addImageWidget();
+  }
+
+  Widget _addImageWidget() {
+    Future<void> addImage() async {
+      void closeWindow(File file) async {
+        if (file != null) {
+          setState(() {
+            mainProfile.images.add(file.path);
+            mainProfile.save();
+          });
+        }
+      }
+      
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return SimpleDialog(
+            title: Text("Add Image"),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(10))),
             children: <Widget>[
-              if(images.length != 0)
-                Expanded(
-                  child:
-                    GestureDetector(
-                      onLongPress: pickImages,
-                      child: Carousel(
-                        autoplay: false,
-                        images: images.map((item) => AssetThumbImageProvider(item, width: item.originalWidth, height: item.originalHeight)).toList(),
-                      ),
-                    ),
-                ),
-              if(images.length == 0)
-                Expanded(
-                  child: Icon(
-                    Icons.camera_alt,
-                    size: 100,
-                    color: Colors.black54,
-                  ),
-                ),
-            ],
+              SimpleDialogOption(
+                onPressed: () async {
+                  final File file = await ImagePicker.pickImage(
+                    source: ImageSource.gallery,
+                  );
+                  closeWindow(file);
+                  Navigator.pop(context);
+                },
+                child: const Text('Choose From Gallery'),
+              ),
+              SimpleDialogOption(
+                onPressed: () async {
+                  final File file = await ImagePicker.pickImage(
+                    source: ImageSource.camera,
+                  );
+                  closeWindow(file);
+                  Navigator.pop(context);
+                },
+                child: const Text('Take A New Picture'),
+              ),
+            ]
+          );
+        }
+      );
+    }
+
+    return Container(
+      height: 100,
+      width: MediaQuery.of(context).size.width,
+      color: Colors.black26,
+      child: GestureDetector(
+        onLongPress: () => addImage(),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            if (mainProfile.images.length < _maxImages)
+              Icon(
+                Icons.add_a_photo,
+                size: 100,
+                color: Color(0xfff7f7f7),
+              ),
+            if (mainProfile.images.length < _maxImages)
+              Text(
+                "Hold to add\nan image", 
+                textAlign: TextAlign.center,
+                style: mainText,
+              ),
+            if (mainProfile.images.length >= _maxImages)
+              Icon(
+                Icons.block,
+                size: 100,
+                color: Color(0xfff7f7f7),
+              ),
+            if (mainProfile.images.length >= _maxImages)
+              Text(
+                "Images limit reached", 
+                style: mainText,
+              ),
+          ]
+        ),
+      ),
+    );
+  }
+
+  Widget _inactivePhoto() {
+    return new Container(
+      child: new Padding(
+        padding: const EdgeInsets.only(left: 3.0, right: 3.0),
+        child: Container(
+          height: 12.0,
+          width: 12.0,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: Color(0xcf080808), width: 1),
+            borderRadius: BorderRadius.circular(8.0)
+          ),
+        ),
+      )
+    );
+  }
+
+  Widget _activePhoto() {
+    return Container(
+      child: Padding(
+        padding: EdgeInsets.only(left: 3.0, right: 3.0),
+        child: Container(
+          height: 14.0,
+          width: 14.0,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10.0),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey,
+                spreadRadius: 0.0,
+                blurRadius: 2.0
+              )
+            ]
           ),
         ),
       ),
     );
+  }
+
+  List<Widget> _buildDots(int index) {
+    List<Widget> dots = [];
+
+    for(int i = 0; i < mainProfile.images.length + 1; ++i) {
+      dots.add(
+        i == index ? _activePhoto(): _inactivePhoto()
+      );
+    }
+
+    if (mainProfile.images.length > 0)
+      return dots;
+    else
+      return List<Widget>();
   }
 }
