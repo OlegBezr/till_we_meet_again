@@ -15,7 +15,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final TextStyle mainText = TextStyle(
-    fontSize: 26.0,
+    fontSize: 25.0,
     color: Color(0xfff7f7f7),
   );
 
@@ -50,29 +50,40 @@ class _HomePageState extends State<HomePage> {
     }
 
     return Scaffold(
-      body: Container(
-        height: MediaQuery.of(context).size.height,
-        width: MediaQuery.of(context).size.width,
-        color: Colors.black26,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            datePicker(),
-            Expanded(
-              child: ImageChoice(
-                mainProfile: mainProfile,
+      body: SafeArea(
+        child: Container(
+          height: MediaQuery.of(context).size.height,
+          width: MediaQuery.of(context).size.width,
+          color: Color.alphaBlend(Colors.black26, Color(0xfffc69a1)),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Flexible(
+                flex: 2,
+                fit: FlexFit.tight,
+                child: datePicker()
               ),
-            ),
-            timeLeft(),
-          ],
+              Flexible(
+                flex: 20,
+                fit: FlexFit.tight,
+                child: ImageChoice(
+                  mainProfile: mainProfile,
+                ),
+              ),
+              Flexible(
+                flex: 2,
+                fit: FlexFit.tight,
+                child: timeLeft()
+              ),
+            ],
+          ),
         ),
       ),
-      backgroundColor: Color(0xfffc69a1),
+      backgroundColor: Color(0xdffc69a1),
     );
   }
 
   Widget datePicker() {
-    String _today = DateFormat.yMd().format(_now);
     String _meetDate = new DateFormat.yMd().format(mainProfile.dateGet);
     String _meetTime = new DateFormat.Hm().format(mainProfile.dateGet);
 
@@ -126,46 +137,27 @@ class _HomePageState extends State<HomePage> {
     }
 
     return Container(
+      padding: EdgeInsets.fromLTRB(5, 0, 0, 0),
       width: MediaQuery.of(context).size.width,
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(5, 25, 0, 0),
-        child: Container(
-          child: Row(
-            children: <Widget>[
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Row(
-                    children: <Widget>[
-                      Text(
-                        "Today: $_today",
-                        style: mainText,
-                      ),
-                    ],
-                  ),
-                  Row(
-                    children: <Widget>[
-                      Text(
-                        "Date: ",
-                        style: mainText,
-                      ),
-                      FlatButton(
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(8))),
-                        onPressed: () => _selectDate(context),
-                        padding: EdgeInsets.all(3.0),
-                        color: Color(0x7fa2a2a2),
-                        splashColor: Color(0x7f898989),
-                        child: Text(
-                          "$_meetDate $_meetTime",
-                          style: mainText,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+      child: Center(
+        child: Row(
+          children: <Widget>[
+            Text(
+              "Date: ",
+              style: mainText,
+            ),
+            FlatButton(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(8))),
+              onPressed: () => _selectDate(context),
+              padding: EdgeInsets.all(3.0),
+              color: Color(0x7fa2a2a2),
+              splashColor: Color(0x7f898989),
+              child: Text(
+                "$_meetDate $_meetTime",
+                style: mainText,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -182,8 +174,8 @@ class _HomePageState extends State<HomePage> {
     int _hours = (_seconds ~/ 3600) % 24;
     int _minutes= (_seconds ~/ 60) % 60;
 
-    return Padding(
-      padding: EdgeInsets.fromLTRB(5, 5, 0, 50),
+    return Container(
+      padding: EdgeInsets.fromLTRB(5, 0, 0, 0),
       child: Row(
         children: <Widget>[
           Text(
