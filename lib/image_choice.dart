@@ -26,6 +26,7 @@ class _ImageChoiceState extends State<ImageChoice> {
   Profile mainProfile;
 
   final int _maxImages = 5;
+  int _activeImageIndex = 0;
 
   final TextStyle mainText = TextStyle(
     fontSize: 26.0,
@@ -41,44 +42,46 @@ class _ImageChoiceState extends State<ImageChoice> {
     return Stack(
       children: <Widget>[
         Container(
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            physics: PageScrollPhysics(),
-            children: <Widget>[] + 
-              imageWidgets() +
-              <Widget>[
-                addImageWidget(),
-              ],
+          child: PageView.builder(
+            onPageChanged: _setActiveImage,
+            itemCount: mainProfile.images.length + 1,
+            itemBuilder: _getImageWidget,
           ),
         ),
         Align(
           alignment: Alignment.bottomCenter,
-          child: Container(height: 50, width: 50, color: Colors.green,),
+          child: Padding(
+            padding: const EdgeInsets.all(15),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: _buildDots(_activeImageIndex)
+            ),
+          ),
         )
       ],
     );
   }
 
-  List<Widget> imageWidgets() {
-    List<Widget> renderedImages = List<Widget>();
-
-    for (int i = 0; i < mainProfile.images.length; i++) {
-      print("Render $i");
-
-      renderedImages.add(
-        ImageWidget(
-          image: File(mainProfile.images[i]),
-          index: i,
-          mainProfile: mainProfile,
-          key: Key(mainProfile.images[i]),
-        )
-      );
-    }
-
-    return renderedImages;
+  void _setActiveImage(int index) {
+    setState(() {
+      _activeImageIndex = index;
+    });
   }
 
-  Widget addImageWidget() {
+  Widget _getImageWidget(BuildContext context, int index) {
+    if (index < mainProfile.images.length)
+      return ImageWidget(
+        image: File(mainProfile.images[index]),
+        index: index,
+        mainProfile: mainProfile,
+        key: Key(mainProfile.images[index]),
+      );
+    else
+      return _addImageWidget();
+  }
+
+  Widget _addImageWidget() {
     Future<void> addImage() async {
       void closeWindow(File file) async {
         if (file != null) {
@@ -165,11 +168,12 @@ class _ImageChoiceState extends State<ImageChoice> {
       child: new Padding(
         padding: const EdgeInsets.only(left: 3.0, right: 3.0),
         child: Container(
-          height: 8.0,
-          width: 8.0,
+          height: 12.0,
+          width: 12.0,
           decoration: BoxDecoration(
-            color: Colors.grey,
-            borderRadius: BorderRadius.circular(4.0)
+            color: Colors.white,
+            border: Border.all(color: Color(0xcf080808), width: 1),
+            borderRadius: BorderRadius.circular(8.0)
           ),
         ),
       )
@@ -181,11 +185,11 @@ class _ImageChoiceState extends State<ImageChoice> {
       child: Padding(
         padding: EdgeInsets.only(left: 3.0, right: 3.0),
         child: Container(
-          height: 10.0,
-          width: 10.0,
+          height: 14.0,
+          width: 14.0,
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(5.0),
+            borderRadius: BorderRadius.circular(10.0),
             boxShadow: [
               BoxShadow(
                 color: Colors.grey,
@@ -202,12 +206,15 @@ class _ImageChoiceState extends State<ImageChoice> {
   List<Widget> _buildDots(int index) {
     List<Widget> dots = [];
 
-    for(int i = 0; i< mainProfile.images.length + 1; ++i) {
+    for(int i = 0; i < mainProfile.images.length + 1; ++i) {
       dots.add(
         i == index ? _activePhoto(): _inactivePhoto()
       );
     }
 
-    return dots;
+    if (mainProfile.images.length > 0)
+      return dots;
+    else
+      return List<Widget>();
   }
 }
