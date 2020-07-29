@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'models/profile.dart';
-import 'image.dart';
+import 'image_widget.dart';
 
 class ImageChoice extends StatefulWidget {
   ImageChoice({this.mainProfile});
