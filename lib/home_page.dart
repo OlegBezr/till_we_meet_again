@@ -44,8 +44,7 @@ class _HomePageState extends State<HomePage> {
         images: new List<String>(),
       );
       profilesBox.add(mainProfile);
-    }
-    else {
+    } else {
       mainProfile = profilesBox.getAt(0);
     }
 
@@ -58,11 +57,7 @@ class _HomePageState extends State<HomePage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              Flexible(
-                flex: 2,
-                fit: FlexFit.tight,
-                child: datePicker()
-              ),
+              Flexible(flex: 2, fit: FlexFit.tight, child: datePicker()),
               Flexible(
                 flex: 20,
                 fit: FlexFit.tight,
@@ -70,11 +65,7 @@ class _HomePageState extends State<HomePage> {
                   mainProfile: mainProfile,
                 ),
               ),
-              Flexible(
-                flex: 2,
-                fit: FlexFit.tight,
-                child: timeLeft()
-              ),
+              Flexible(flex: 2, fit: FlexFit.tight, child: timeLeft()),
             ],
           ),
         ),
@@ -91,43 +82,41 @@ class _HomePageState extends State<HomePage> {
       final DateTime pickedDate = await showDatePicker(
         context: context,
         initialDate: mainProfile.dateGet,
-        firstDate: _now.subtract(
-          Duration(
-            hours: 23, 
-            minutes: 59,
-          )
-        ),
+        firstDate: _now.subtract(Duration(
+          hours: 23,
+          minutes: 59,
+        )),
         lastDate: DateTime(_now.year + 100),
       );
 
       final TimeOfDay pickedTime = await showTimePicker(
         context: context,
         initialTime: TimeOfDay(
-          hour: mainProfile.dateGet.hour, 
+          hour: mainProfile.dateGet.hour,
           minute: mainProfile.dateGet.minute,
         ),
       );
 
-      final DateTime picked = pickedDate.add(Duration(hours: pickedTime.hour, minutes: pickedTime.minute));
+      final DateTime picked = pickedDate
+          .add(Duration(hours: pickedTime.hour, minutes: pickedTime.minute));
       if (picked.isBefore(_now)) {
         showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text("Date error"),
-              content: Text("You can't choose meeting time before rn"),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(10))),
-              actions: [
-                FlatButton(
-                  child: Text("OK"),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
-            );
-          }
-        );
-      }
-      else if (picked != null && picked != mainProfile.date) {
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Text("Date error"),
+                content: Text("You can't choose meeting time before rn"),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(10))),
+                actions: [
+                  FlatButton(
+                    child: Text("OK"),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              );
+            });
+      } else if (picked != null && picked != mainProfile.date) {
         setState(() {
           mainProfile.date = picked;
         });
@@ -147,7 +136,8 @@ class _HomePageState extends State<HomePage> {
               style: mainText,
             ),
             FlatButton(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(8))),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(8))),
               onPressed: () => _selectDate(context),
               padding: EdgeInsets.all(3.0),
               color: Color(0x7fa2a2a2),
@@ -172,7 +162,7 @@ class _HomePageState extends State<HomePage> {
 
     int _days = _seconds ~/ (24 * 60 * 60);
     int _hours = (_seconds ~/ 3600) % 24;
-    int _minutes= (_seconds ~/ 60) % 60;
+    int _minutes = (_seconds ~/ 60) % 60;
 
     return Container(
       padding: EdgeInsets.fromLTRB(5, 0, 0, 0),
