@@ -215,6 +215,6 @@ class _ImageChoiceState extends State<ImageChoice> {
     if (mainProfile.images.length > 0)
       return dots;
     else
-      return List<Widget>();
+      return [];
   }
 }
